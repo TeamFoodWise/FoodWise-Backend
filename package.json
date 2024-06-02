@@ -9,5 +9,16 @@
     "pg": "^8.11.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
-  }
+  },
+  "name": "foodwise-backend",
+  "version": "1.0.0",
+  "description": "The Backend Service for FoodWise App",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }
