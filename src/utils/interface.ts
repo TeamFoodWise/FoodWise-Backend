@@ -12,5 +12,13 @@ export interface Inventory {
     user_id: number;
 }
 
-
+export interface Item {
+    id?: number;
+    name: string;
+    quantity: number;
+    category: string;
+    purchase_date: Date;
+    expiration_date: Date;
+    inventory_id: number;
+}
 
