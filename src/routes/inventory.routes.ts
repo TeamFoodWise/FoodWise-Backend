@@ -1,5 +1,5 @@
 import {Router} from 'express';
-import {createInventory, deleteInventory, getInventoryById, getInventories, updateInventory} from '../controllers/inventoryController';
+import {createInventory, deleteInventory, getInventoryById, getInventories, updateInventory} from '../controllers/inventory.controller';
 
 const router: Router = Router();
 
