@@ -6,5 +6,11 @@ export interface User {
     preferences?: object;
 }
 
+export interface Inventory {
+    id?: number;
+    name: string;
+    user_id: number;
+}
+
 
 
