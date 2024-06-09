@@ -1,12 +1,12 @@
 import {Request, Response} from 'express';
 import UserModel from '../models/userModel';
+import {User} from '../utils/interface';
 
-export const createUser = async (req: Request, res: Response): Promise<void> => {
+export const createUser = async (user: User): Promise<User | null> => {
     try {
-        const user = await UserModel.create(req.body);
-        res.status(201).json(user);
+        return await UserModel.create(user);
     } catch (error: any) {
-        res.status(500).json({error: error.message});
+        throw new Error(error.message);
     }
 };
 
@@ -16,6 +16,14 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
         res.status(200).json(users);
     } catch (error: any) {
         res.status(500).json({error: error.message});
+    }
+};
+
+export const getUserByEmail = async (email: string): Promise<User | null> => {
+    try {
+        return await UserModel.findByEmail(email);
+    } catch (error: any) {
+        throw new Error(error.message);
     }
 };
 

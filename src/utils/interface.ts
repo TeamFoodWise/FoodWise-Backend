@@ -22,3 +22,7 @@ export interface Item {
     inventory_id: number;
 }
 
+export interface JwtPayload {
+    userId: string;
+}
+

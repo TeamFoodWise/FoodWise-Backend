@@ -27,6 +27,20 @@ class UserModel {
         return data || [];
     }
 
+    static async findByEmail(email: string): Promise<User | null> {
+        const {data, error} = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
+    }
+
     static async findById(id: number): Promise<User | null> {
         const {data, error} = await supabase
             .from('users')
