@@ -26,3 +26,13 @@ export interface JwtPayload {
     userId: string;
 }
 
+export interface History {
+    id?: number;
+    user_id: number;
+    item_id: number;
+    consumption_id?: number;
+    event: string;
+    date: Date;
+    quantity: number;
+}
+

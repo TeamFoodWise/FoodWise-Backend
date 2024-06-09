@@ -8,3 +8,5 @@ router.get('/', getItems);
 router.get('/:id', getItemById);
 router.put('/:id', updateItem);
 router.delete('/:id', deleteItem);
+
+export default router;
