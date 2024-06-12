@@ -1,3 +1,5 @@
+import {Request} from 'express';
+
 export interface User {
     id?: number;
     full_name: string;
@@ -22,10 +24,6 @@ export interface Item {
     inventory_id: number;
 }
 
-export interface JwtPayload {
-    userId: string;
-}
-
 export interface History {
     id?: number;
     user_id: number;
@@ -34,5 +32,14 @@ export interface History {
     event: string;
     date: Date;
     quantity: number;
+}
+
+export interface JwtPayload {
+    userId: string;
+}
+
+export interface AuthenticatedRequest extends Request {
+    userId?: number;
+    token?: string;
 }
 

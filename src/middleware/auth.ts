@@ -1,14 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { JwtPayload } from '../utils/interface';
+import { JwtPayload, AuthenticatedRequest } from '../utils/interface';
 
 dotenv.config();
 
 const jwtSecret = process.env.jwt_secret || '';
 const tokenBlacklist = new Set<string>();
 
-const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
+const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): Response | void => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
@@ -24,8 +24,8 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
         if (err) {
             return res.status(403).json({ error: 'Failed to authenticate token' });
         }
-
-        req.user = (payload as JwtPayload).userId;
+        req.userId = parseInt((payload as JwtPayload).userId);
+        req.token = token;
         next();
     });
 };
