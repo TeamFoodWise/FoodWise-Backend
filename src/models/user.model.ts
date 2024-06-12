@@ -1,14 +1,18 @@
 import supabase from '../config/supabase';
-import {User} from '../utils/interface';
+import { User } from '../utils/interface';
 
 class UserModel {
     static async create(user: User): Promise<User | null> {
-        const {data, error} = await supabase
+        // const usersArray = Array.isArray(user) ? user : [user];
+
+        const { data, error } = await supabase
             .from('users')
             .insert(user)
+            .select()
             .single();
 
         if (error) {
+            console.error('Error creating user:', error.message);
             throw new Error(error.message);
         }
 
@@ -16,7 +20,7 @@ class UserModel {
     }
 
     static async findAll(): Promise<User[]> {
-        const {data, error} = await supabase
+        const { data, error } = await supabase
             .from('users')
             .select('*');
 
@@ -28,13 +32,13 @@ class UserModel {
     }
 
     static async findByEmail(email: string): Promise<User | null> {
-        const {data, error} = await supabase
+        const { data, error } = await supabase
             .from('users')
             .select('*')
             .eq('email', email)
             .single();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
             throw new Error(error.message);
         }
 
@@ -42,13 +46,13 @@ class UserModel {
     }
 
     static async findById(id: number): Promise<User | null> {
-        const {data, error} = await supabase
+        const { data, error } = await supabase
             .from('users')
             .select('*')
             .eq('id', id)
             .single();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
             throw new Error(error.message);
         }
 
@@ -56,10 +60,11 @@ class UserModel {
     }
 
     static async update(id: number, user: User): Promise<User | null> {
-        const {data, error} = await supabase
+        const { data, error } = await supabase
             .from('users')
             .update(user)
             .eq('id', id)
+            .select()
             .single();
 
         if (error) {
@@ -70,7 +75,7 @@ class UserModel {
     }
 
     static async delete(id: number): Promise<void> {
-        const {error} = await supabase
+        const { error } = await supabase
             .from('users')
             .delete()
             .eq('id', id);

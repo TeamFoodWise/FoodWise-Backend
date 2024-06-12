@@ -1,21 +1,32 @@
-import {Request, Response} from 'express';
+import { Request, Response } from 'express';
 import UserModel from '../models/user.model';
-import {User} from '../utils/interface';
+import { User } from '../utils/interface';
 
-export const createUser = async (user: User): Promise<User | null> => {
+export const createUser = async (req: Request, res: Response): Promise<void> => {
+    const user: User = req.body;
+
+    try {
+        const createdUser = await UserModel.create(user);
+        res.status(201).json(createdUser);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const registerUser = async(user: User): Promise<User | null> => {
     try {
         return await UserModel.create(user);
     } catch (error: any) {
         throw new Error(error.message);
     }
-};
+}
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
     try {
         const users = await UserModel.findAll();
         res.status(200).json(users);
     } catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -33,10 +44,10 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
         if (user) {
             res.status(200).json(user);
         } else {
-            res.status(404).json({error: 'User not found'});
+            res.status(404).json({ error: 'User not found' });
         }
     } catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -46,10 +57,10 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
         if (user) {
             res.status(200).json(user);
         } else {
-            res.status(404).json({error: 'User not found'});
+            res.status(404).json({ error: 'User not found' });
         }
     } catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -58,6 +69,6 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
         await UserModel.delete(parseInt(req.params.id));
         res.status(204).send();
     } catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
