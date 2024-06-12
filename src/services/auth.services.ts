@@ -1,10 +1,10 @@
 import {Request, Response} from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, {JwtPayload} from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import {editProfile, getUserByEmail, registerUser} from '../controllers/user.controller';
 import {AuthenticatedRequest, User} from '../utils/interface';
-import {invalidateToken} from "../middleware/auth";
+import {generateAccessToken, generateRefreshToken, invalidateToken, refreshTokens} from "../middleware/auth";
 import UserModel from "../models/user.model";
 
 dotenv.config();
@@ -33,12 +33,17 @@ export const register = async (req: Request, res: Response) => {
             preferences: []
         };
 
-        const token = jwt.sign({userId: user.id}, jwtSecret, {expiresIn: '1h'});
-
         const createdUser = await registerUser(user);
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+
         res.status(200).json({
-            "access_token": token,
-            user: createdUser
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            user: {
+                full_name: user.full_name,
+                email: user.email
+            }
         });
     } catch (error: any) {
         res.status(500).json({error: error.message});
@@ -61,11 +66,17 @@ export const login = async (req: Request, res: Response) => {
             return res.status(400).json({error: 'Invalid email or password'});
         }
 
-        const token = jwt.sign({userId: user.id}, jwtSecret, {expiresIn: '1h'});
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+        refreshTokens.add(refreshToken);
 
         res.status(200).json({
-            "access_token": token,
-            user: user
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            user: {
+                full_name: user.full_name,
+                email: user.email
+            }
         });
     } catch (error: any) {
         res.status(500).json({error: error.message});
@@ -73,16 +84,16 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: AuthenticatedRequest, res: Response) => {
-    const token = req.token;
-
-    if (!token) {
-        return res.status(401).json({error: 'No token provided'});
+    const { refresh_token } = req.body;
+    if (!refresh_token) {
+        return res.status(401).json({ error: 'No refresh token provided' });
     }
+
     try {
-        invalidateToken(token);
-        res.status(200).json({message: 'Logout successful'});
+        invalidateToken(refresh_token);
+        res.status(200).json({ message: 'Logout successful' });
     } catch (error: any) {
-        res.status(500).json({error: error.message});
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -98,7 +109,12 @@ export const showCurrentUser = async (req: AuthenticatedRequest, res: Response) 
             return res.status(400).json({ error: 'User not found' });
         }
 
-        res.status(200).json(user);
+        res.status(200).json({
+            user: {
+                full_name: user.full_name,
+                email: user.email
+            }
+        });
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
@@ -132,7 +148,13 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
 
         const updated = await editProfile(updatedUser);
         if (updated) {
-            res.status(200).json(updated);
+            res.status(200).json({
+                message: 'Profile updated',
+                user: {
+                    full_name: updated.full_name,
+                    email: updated.email
+                }
+            });
         } else {
             res.status(404).json({ error: 'User not found' });
         }
@@ -140,3 +162,36 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
         res.status(500).json({ error: error.message });
     }
 };
+
+export const refreshToken = async (req: AuthenticatedRequest, res: Response) => {
+    const { refresh_token } = req.body;
+
+    if (!refresh_token || !refreshTokens.has(refresh_token)) {
+        return res.status(403).json({ error: 'Invalid or missing refresh token' });
+    }
+
+    try {
+        jwt.verify(refresh_token, jwtSecret, async (err: any, payload: any) => {
+            if (err) {
+                return res.status(403).json({error: 'Invalid refresh token'});
+            }
+
+            if (!req.userId) {
+                return res.status(403).json({error: 'User not found'});
+            }
+
+            const user = await UserModel.findById(req.userId);
+
+            if (!user) {
+                return res.status(403).json({error: 'User not found'});
+            }
+
+            const accessToken = generateAccessToken(user);
+            const refreshToken = generateRefreshToken(user);
+            res.status(200).json({access_token: accessToken, refresh_token: refreshToken});
+        });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+};
+

@@ -40,6 +40,7 @@ export interface JwtPayload {
 
 export interface AuthenticatedRequest extends Request {
     userId?: number;
-    token?: string;
+    access_token?: string;
+    refresh_token?: string;
 }
 
