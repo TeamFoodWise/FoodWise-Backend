@@ -34,6 +34,14 @@ export interface History {
     quantity: number;
 }
 
+export interface Consumption {
+    id?: number;
+    user_id: number;
+    item_id: number;
+    date: Date;
+    quantity: number;
+}
+
 export interface JwtPayload {
     userId: string;
 }

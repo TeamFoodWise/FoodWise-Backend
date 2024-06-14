@@ -9,10 +9,13 @@ const router: Router = Router();
 router.use('/auth', authRoutes);
 
 router.get('/protected', authenticateToken, (req, res) => {
-    res.json({ message: 'Protected route' });
+    res.json({message: 'Protected route'});
 })
 
+// Authenticate as admin if feasible
+
 router.use('/users', userRoutes);
-router.use('/inventory', inventoryRoutes);
+router.use('/inventories', inventoryRoutes);
+
 
 export const routes = router;

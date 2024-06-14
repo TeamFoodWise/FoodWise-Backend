@@ -9,8 +9,8 @@ const router = Router();
 router.post('/register', validateSchema(registerSchema), register);
 router.post('/login', validateSchema(loginSchema), login);
 router.post('/logout', authenticateToken, logout);
-router.post('/current_user', authenticateToken, showCurrentUser);
-router.put('/update_profile', authenticateToken, updateProfile);
-router.post('/refresh_token', authenticateRefreshToken, refreshToken);
+router.post('/current-user', authenticateToken, showCurrentUser);
+router.put('/update-profile', authenticateToken, updateProfile);
+router.post('/refresh-token', authenticateRefreshToken, refreshToken);
 
 export default router;
