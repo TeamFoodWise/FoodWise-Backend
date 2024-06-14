@@ -6,6 +6,7 @@ class HistoryModel {
         const {data, error} = await supabase
             .from('histories')
             .insert(history)
+            .select()
             .single();
 
         if (error) {

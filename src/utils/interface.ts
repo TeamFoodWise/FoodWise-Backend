@@ -6,6 +6,7 @@ export interface User {
     email: string;
     hashed_password: string;
     preferences?: object;
+    last_month_progress: number;
 }
 
 export interface Inventory {
@@ -19,8 +20,8 @@ export interface Item {
     name: string;
     quantity: number;
     category: string;
-    purchase_date: Date;
-    expiration_date: Date;
+    purchase_date: string;
+    expiration_date: string;
     inventory_id: number;
 }
 
@@ -30,7 +31,7 @@ export interface History {
     item_id: number;
     consumption_id?: number;
     event: string;
-    date: Date;
+    date: string;
     quantity: number;
 }
 
@@ -38,7 +39,7 @@ export interface Consumption {
     id?: number;
     user_id: number;
     item_id: number;
-    date: Date;
+    date: string;
     quantity: number;
 }
 

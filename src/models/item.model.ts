@@ -6,6 +6,7 @@ class ItemModel {
         const {data, error} = await supabase
             .from('items')
             .insert(item)
+            .select()
             .single();
 
         if (error) {
@@ -67,6 +68,19 @@ class ItemModel {
         }
 
         return data;
+    }
+
+    static async findByInventoryId(inventoryId: number | undefined): Promise<Item[]> {
+        const {data, error} = await supabase
+            .from('items')
+            .select('*')
+            .eq('inventory_id', inventoryId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data || [];
     }
 }
 

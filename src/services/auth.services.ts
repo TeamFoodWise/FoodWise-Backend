@@ -1,6 +1,6 @@
 import {Request, Response} from 'express';
 import bcrypt from 'bcryptjs';
-import jwt, {JwtPayload} from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import {editProfile, getUserByEmail, registerUser} from '../controllers/user.controller';
 import {AuthenticatedRequest, User} from '../utils/interface';
@@ -41,6 +41,7 @@ export const register = async (req: Request, res: Response) => {
             access_token: accessToken,
             refresh_token: refreshToken,
             user: {
+                id: user.id,
                 full_name: user.full_name,
                 email: user.email
             }
@@ -74,6 +75,7 @@ export const login = async (req: Request, res: Response) => {
             access_token: accessToken,
             refresh_token: refreshToken,
             user: {
+                id: user.id,
                 full_name: user.full_name,
                 email: user.email
             }
@@ -84,29 +86,29 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: AuthenticatedRequest, res: Response) => {
-    const { refresh_token } = req.body;
+    const {refresh_token} = req.body;
     if (!refresh_token) {
-        return res.status(401).json({ error: 'No refresh token provided' });
+        return res.status(401).json({error: 'No refresh token provided'});
     }
 
     try {
         invalidateToken(refresh_token);
-        res.status(200).json({ message: 'Logout successful' });
+        res.status(200).json({message: 'Logout successful'});
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({error: error.message});
     }
 };
 
 export const showCurrentUser = async (req: AuthenticatedRequest, res: Response) => {
     try {
         if (!req.userId) {
-            return res.status(400).json({ error: 'User not found' });
+            return res.status(400).json({error: 'User not found'});
         }
 
         const user = await UserModel.findById(req.userId);
 
         if (!user) {
-            return res.status(400).json({ error: 'User not found' });
+            return res.status(400).json({error: 'User not found'});
         }
 
         res.status(200).json({
@@ -116,26 +118,26 @@ export const showCurrentUser = async (req: AuthenticatedRequest, res: Response) 
             }
         });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({error: error.message});
     }
 };
 
 export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
-    const { full_name, new_password, confirmation_new_password } = req.body;
+    const {full_name, new_password, confirmation_new_password} = req.body;
 
     if (new_password !== confirmation_new_password) {
-        return res.status(400).json({ error: 'Passwords do not match' });
+        return res.status(400).json({error: 'Passwords do not match'});
     }
 
     try {
         if (!req.userId) {
-            return res.status(400).json({ error: 'User not found' });
+            return res.status(400).json({error: 'User not found'});
         }
 
         const user = await UserModel.findById(req.userId);
 
         if (!user) {
-            return res.status(400).json({ error: 'User not found' });
+            return res.status(400).json({error: 'User not found'});
         }
 
         const hashed_password = await bcrypt.hash(new_password, 10);
@@ -156,18 +158,18 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
                 }
             });
         } else {
-            res.status(404).json({ error: 'User not found' });
+            res.status(404).json({error: 'User not found'});
         }
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({error: error.message});
     }
 };
 
 export const refreshToken = async (req: AuthenticatedRequest, res: Response) => {
-    const { refresh_token } = req.body;
+    const {refresh_token} = req.body;
 
     if (!refresh_token || !refreshTokens.has(refresh_token)) {
-        return res.status(403).json({ error: 'Invalid or missing refresh token' });
+        return res.status(403).json({error: 'Invalid or missing refresh token'});
     }
 
     try {
@@ -191,7 +193,7 @@ export const refreshToken = async (req: AuthenticatedRequest, res: Response) => 
             res.status(200).json({access_token: accessToken, refresh_token: refreshToken});
         });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({error: error.message});
     }
 };
 

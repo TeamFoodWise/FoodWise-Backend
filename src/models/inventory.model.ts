@@ -2,10 +2,11 @@ import supabase from '../config/supabase';
 import {Inventory} from '../utils/interface';
 
 class InventoryModel {
-    static async create(inventory: Inventory): Promise<Inventory | null> {
+    static async create(inventory: Inventory): Promise<Inventory> {
         const {data, error} = await supabase
             .from('inventories')
             .insert(inventory)
+            .select()
             .single();
 
         if (error) {
@@ -41,6 +42,19 @@ class InventoryModel {
         return data;
     }
 
+    static async findByUserId(userId: number): Promise<Inventory[]> {
+        const {data, error} = await supabase
+            .from('inventories')
+            .select('*')
+            .eq('user_id', userId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data || [];
+    }
+
     static async update(id: number, inventory: Inventory): Promise<Inventory | null> {
         const {data, error} = await supabase
             .from('inventories')
@@ -64,6 +78,20 @@ class InventoryModel {
         if (error) {
             throw new Error(error.message);
         }
+    }
+
+    static async findByName(name: string): Promise<Inventory | null> {
+        const {data, error} = await supabase
+            .from('inventories')
+            .select('*')
+            .eq('name', name)
+            .single();
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
     }
 }
 

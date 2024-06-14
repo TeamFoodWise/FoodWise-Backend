@@ -1,10 +1,46 @@
 import {Request, Response} from 'express';
 import InventoryModel from '../models/inventory.model';
+import {Inventory} from "../utils/interface";
 
 export const createInventory = async (req: Request, res: Response): Promise<void> => {
+    const {name, user_id} = req.body;
+
+    if (!name || !user_id) {
+        res.status(400).json({error: 'Name and user_id are required'});
+        return;
+    }
+
+    if (typeof name !== 'string' || typeof user_id !== 'number') {
+        res.status(400).json({error: 'Invalid data type'});
+        return;
+    }
+
+    if (name.length < 3) {
+        res.status(400).json({error: 'Name should be at least 3 characters long'});
+        return;
+    }
+
     try {
-        const inventory = await InventoryModel.create(req.body);
-        res.status(201).json(inventory);
+        const inventories = await InventoryModel.findAll();
+        const inventoryExists = inventories.find(inventory => inventory.name === name);
+
+        if (inventoryExists) {
+            res.status(400).json({error: 'Inventory already exists'});
+            return;
+        }
+
+        const inventory: Inventory = await InventoryModel.create(req.body);
+
+        if (!inventory) {
+            res.status(400).json({error: 'Inventory not created'});
+            return;
+        }
+
+        res.status(201).json({
+            id: inventory.id,
+            name: name,
+            user_id: user_id
+        });
     } catch (error: any) {
         res.status(500).json({error: error.message});
     }
