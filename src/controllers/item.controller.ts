@@ -1,6 +1,7 @@
 import {Request, Response} from 'express';
 import ItemModel from '../models/item.model';
-import {Item} from '../utils/interface';
+import {AuthenticatedRequest, Item} from '../utils/interface'
+import InventoryModel from "../models/inventory.model";
 
 const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -113,8 +114,11 @@ export const createItem = async (req: Request, res: Response): Promise<void> => 
     }
 };
 
-export const getItems = async (req: Request, res: Response): Promise<void> => {
+export const getItems = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
+        const userId = req.userId;
+        console.log('items', userId)
+
         const items = await ItemModel.findAll();
         res.status(200).json(items);
     } catch (error: any) {

@@ -167,6 +167,7 @@ export const showUserStatistics = async (req: AuthenticatedRequest, res: Respons
             history_progress: lastMonthProgress,
             whole_history_progress: wholeHistoryProgress
         })
+        res.status(200).json("huwuh");
 
     } catch (error: any) {
         res.status(500).json({error: error.message});

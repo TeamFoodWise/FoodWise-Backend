@@ -1,5 +1,6 @@
 import supabase from '../config/supabase';
 import {Item} from '../utils/interface';
+import InventoryModel from "./inventory.model";
 
 class ItemModel {
     static async create(item: Item): Promise<Item | null> {
@@ -75,6 +76,27 @@ class ItemModel {
             .from('items')
             .select('*')
             .eq('inventory_id', inventoryId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data || [];
+    }
+
+    static async findByUserId(userId: number | undefined): Promise<Item[]> {
+        if (!userId) {
+            throw new Error('User ID is required');
+        }
+
+        const inventories = await InventoryModel.findByUserId(userId);
+
+        const inventoryIdList = inventories.map((inventory) => inventory.id);
+
+        const {data, error} = await supabase
+            .from('items')
+            .select('*')
+            .in('inventory_id', inventoryIdList);
 
         if (error) {
             throw new Error(error.message);

@@ -42,7 +42,11 @@ class InventoryModel {
         return data;
     }
 
-    static async findByUserId(userId: number): Promise<Inventory[]> {
+    static async findByUserId(userId: number | undefined): Promise<Inventory[]> {
+        if (!userId) {
+            throw new Error('User ID is required');
+        }
+
         const {data, error} = await supabase
             .from('inventories')
             .select('*')

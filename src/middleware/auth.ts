@@ -5,7 +5,7 @@ import {JwtPayload, AuthenticatedRequest, User} from '../utils/interface';
 
 dotenv.config();
 
-const jwtSecret = process.env.jwt_secret || '';
+const jwtSecret = process.env.JWT_SECRET || '';
 const tokenBlacklist = new Set<string>();
 const refreshTokens = new Set<string>();
 
@@ -22,6 +22,7 @@ const generateRefreshToken = (user: User) => {
 const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): Response | void => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
+    console.log(token);
 
     if (!token) {
         return res.status(401).json({ error: 'No token provided' });
@@ -32,10 +33,19 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
     }
 
     jwt.verify(token, jwtSecret, (err, payload) => {
-        if (err) {
+        if (err || !payload) {
             return res.status(403).json({ error: 'Failed to authenticate token' });
         }
-        req.userId = parseInt((payload as JwtPayload).userId);
+
+        const jwtPayload = payload as JwtPayload;
+        const userId = parseInt(jwtPayload.userId, 10);
+
+        if (isNaN(userId)) {
+            console.error('Invalid user ID', jwtPayload.userId)
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        req.userId = userId;
         req.access_token = token;
         next();
     });
@@ -49,10 +59,18 @@ const authenticateRefreshToken = (req: AuthenticatedRequest, res: Response, next
     }
 
     jwt.verify(refresh_token, jwtSecret, (err: any, payload: any) => {
-        if (err) {
-            return res.status(403).json({ error: 'Failed to authenticate refresh token' });
+        if (err || !payload) {
+            return res.status(403).json({ error: 'Failed to authenticate token' });
         }
-        req.userId = parseInt((payload as JwtPayload).userId);
+
+        const jwtPayload = payload as JwtPayload;
+        const userId = parseInt(jwtPayload.userId, 10);
+
+        if (isNaN(userId)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        req.userId = userId;
         next();
     });
 };

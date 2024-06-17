@@ -1,22 +1,12 @@
 import {Request, Response} from 'express';
 import InventoryModel from '../models/inventory.model';
-import {Inventory} from "../utils/interface";
+import {AuthenticatedRequest, Inventory} from "../utils/interface";
 
 export const createInventory = async (req: Request, res: Response): Promise<void> => {
     const {name, user_id} = req.body;
 
     if (!name || !user_id) {
         res.status(400).json({error: 'Name and user_id are required'});
-        return;
-    }
-
-    if (typeof name !== 'string' || typeof user_id !== 'number') {
-        res.status(400).json({error: 'Invalid data type'});
-        return;
-    }
-
-    if (name.length < 3) {
-        res.status(400).json({error: 'Name should be at least 3 characters long'});
         return;
     }
 
@@ -46,7 +36,7 @@ export const createInventory = async (req: Request, res: Response): Promise<void
     }
 };
 
-export const getInventories = async (req: Request, res: Response): Promise<void> => {
+export const getInventories = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const inventories = await InventoryModel.findAll();
         res.status(200).json(inventories);
@@ -89,3 +79,17 @@ export const deleteInventory = async (req: Request, res: Response): Promise<void
         res.status(500).json({error: error.message});
     }
 };
+
+export const getInventoriesByUserId = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.userId) {
+            res.status(400).json({error: 'User ID is required'});
+            return;
+        }
+
+        const inventories = await InventoryModel.findByUserId(req.userId);
+        res.status(200).json(inventories);
+    } catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+}
