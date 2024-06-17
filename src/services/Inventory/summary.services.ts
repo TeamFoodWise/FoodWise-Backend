@@ -3,10 +3,7 @@ import ConsumptionModel from "../../models/consumption.model";
 import {AuthenticatedRequest, Item} from "../../utils/interface";
 import {Response} from 'express';
 import parseDate from "../../utils/parseDate";
-
-const getConsumedItems = async (userId: number) => {
-    return await ConsumptionModel.getConsumptionsByUserId(userId)
-}
+import {getConsumedItems} from "../../controllers/consumption.controller";
 
 const countInStock = async (items: Item[], userId: number): Promise<number> => {
     const consumedByUsers = await getConsumedItems(userId);

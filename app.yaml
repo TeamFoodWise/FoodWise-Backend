@@ -4,12 +4,10 @@ service: default
 
 env: standard
 
-entrypoint: npm start
-
 env_variables:
   NODE_ENV: "production"
-  SUPABASE_KEY: "https://shacmoiuwhufsknbtfhz.supabase.co"
-  SUPABASE_URL: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoYWNtb2l1d2h1ZnNrbmJ0Zmh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTc2NjIzNDAsImV4cCI6MjAzMzIzODM0MH0.MyAcY22iv_OVeAMCyp_ZiMA3m59xqgnhbwWUz_k_zfQ"
+  SUPABASE_URL: "https://shacmoiuwhufsknbtfhz.supabase.co"
+  SUPABASE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNoYWNtb2l1d2h1ZnNrbmJ0Zmh6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTc2NjIzNDAsImV4cCI6MjAzMzIzODM0MH0.MyAcY22iv_OVeAMCyp_ZiMA3m59xqgnhbwWUz_k_zfQ"
   JWT_SECRET: "ar/aFP2iY8odZtMA14Gh1oF8G1jO2Bk/mOdcqBf3AGXaTu7+LRLDMtOToloeQNjy3Uqrej/2E8JL/LUjhqe6Vg=="
 
 handlers:
