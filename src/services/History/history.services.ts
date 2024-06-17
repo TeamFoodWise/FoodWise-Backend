@@ -1,5 +1,5 @@
 import {Request, Response} from 'express';
-import HistoryModel from '../models/inventory.model';
+import HistoryModel from '../../models/inventory.model';
 
 const getHistory = async (req: Request, res: Response) => {
     try {

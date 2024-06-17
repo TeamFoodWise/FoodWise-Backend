@@ -5,9 +5,9 @@ import {
     getInventoryById,
     getInventories,
     updateInventory,
-    getInventoriesByUserId
 } from '../controllers/inventory.controller';
 import {authenticateToken} from "../middleware/auth";
+import {showInventorySummary} from "../services/Inventory/summary.services";
 
 const router: Router = Router();
 
@@ -16,5 +16,6 @@ router.get('/', getInventories);
 router.get('/:id', getInventoryById);
 router.put('/:id', updateInventory);
 router.delete('/:id', deleteInventory);
+router.get('/summary', authenticateToken, showInventorySummary)
 
 export default router;

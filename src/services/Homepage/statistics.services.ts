@@ -6,7 +6,7 @@ import ConsumptionModel from "../../models/consumption.model";
 import ItemModel from "../../models/item.model";
 import InventoryModel from "../../models/inventory.model";
 import cron from 'node-cron';
-import parseDate from "../../utils/utilities";
+import parseDate from "../../utils/parseDate";
 
 dotenv.config()
 

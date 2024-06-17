@@ -2,7 +2,7 @@ import supabase from '../config/supabase';
 import {Inventory} from '../utils/interface';
 
 class InventoryModel {
-    static async create(inventory: Inventory): Promise<Inventory> {
+    static async create(inventory: { user_id: number | undefined; name: string }): Promise<Inventory> {
         const {data, error} = await supabase
             .from('inventories')
             .insert(inventory)

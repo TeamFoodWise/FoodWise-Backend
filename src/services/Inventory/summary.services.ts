@@ -2,7 +2,7 @@ import ItemModel from "../../models/item.model";
 import ConsumptionModel from "../../models/consumption.model";
 import {AuthenticatedRequest, Item} from "../../utils/interface";
 import {Response} from 'express';
-import parseDate from "../../utils/utilities";
+import parseDate from "../../utils/parseDate";
 
 const getConsumedItems = async (userId: number) => {
     return await ConsumptionModel.getConsumptionsByUserId(userId)
@@ -53,18 +53,24 @@ const countExpired = async (items: Item[], userId: number): Promise<number> => {
 
 export const showInventorySummary = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const userId = req.userId;
-
-        if (!userId) {
-            return res.status(400).json({message: 'User ID is required'});
-        }
-        const allItemsByUserID: Item[] = await ItemModel.findByUserId(userId);
-
+        console.log('huwuw')
         res.status(200).json({
-            "in_stock_count": countInStock(allItemsByUserID, userId),
-            "consumed_count": countConsumed(allItemsByUserID, userId),
-            "expired_count": countExpired(allItemsByUserID, userId),
+            "in_stock_count": 0,
+            "consumed_count": 0,
+            "expired_count": 0,
         })
+        // const userId = req.userId;
+        //
+        // if (!userId) {
+        //     return res.status(400).json({message: 'User ID is required'});
+        // }
+        // const allItemsByUserID: Item[] = await ItemModel.findByUserId(userId);
+        //
+        // res.status(200).json({
+        //     "in_stock_count": countInStock(allItemsByUserID, userId),
+        //     "consumed_count": countConsumed(allItemsByUserID, userId),
+        //     "expired_count": countExpired(allItemsByUserID, userId),
+        // })
 
     } catch {
         return res.status(500).json({message: 'Internal server error'});

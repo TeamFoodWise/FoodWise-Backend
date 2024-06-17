@@ -2,10 +2,11 @@ import {Request, Response} from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import {editProfile, getUserByEmail, registerUser} from '../controllers/user.controller';
-import {AuthenticatedRequest, User} from '../utils/interface';
-import {generateAccessToken, generateRefreshToken, invalidateToken, refreshTokens} from "../middleware/auth";
-import UserModel from "../models/user.model";
+import {editProfile, getUserByEmail, registerUser} from '../../controllers/user.controller';
+import {AuthenticatedRequest, User} from '../../utils/interface';
+import {generateAccessToken, generateRefreshToken, invalidateToken, refreshTokens} from "../../middleware/auth";
+import UserModel from "../../models/user.model";
+import InventoryModel from "../../models/inventory.model";
 
 dotenv.config();
 
@@ -37,13 +38,20 @@ export const register = async (req: Request, res: Response) => {
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
 
+        const defaultInventory = {
+            name: 'Default',
+            user_id: createdUser?.id
+        };
+
+        await InventoryModel.create(defaultInventory);
+
         res.status(200).json({
             access_token: accessToken,
             refresh_token: refreshToken,
             user: {
                 id: user.id,
                 full_name: user.full_name,
-                email: user.email
+                email: user.email,
             }
         });
     } catch (error: any) {

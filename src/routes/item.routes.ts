@@ -3,21 +3,20 @@ import {
     createItem,
     deleteItem,
     getItemById,
-    getItems,
+    getItems, getItemsByUserId,
     updateItem,
-    createManyItems,
-} from '../controllers/item.controller';
+} from '../services/Inventory/item.services';
 import {authenticateToken} from "../middleware/auth";
 import {getExpiringSoonItems} from "../services/Homepage/expiring.services"
 
 const router: Router = Router();
 
-router.post('/', createItem);
-router.get('/', authenticateToken, getItems);
+router.post('/', authenticateToken, createItem);
+router.get('/all', getItems);
+router.get('/', authenticateToken, getItemsByUserId)
 router.get('/:id', getItemById);
-router.put('/:id', updateItem);
-router.delete('/:id', deleteItem)
-router.post('/multiple', createManyItems);
+router.put('/:id', authenticateToken, updateItem);
+router.delete('/', authenticateToken, deleteItem)
 router.get('/expiring-soon', authenticateToken, getExpiringSoonItems);
 
 export default router;

@@ -20,7 +20,8 @@ export interface Item {
     name: string;
     quantity: number;
     category: string;
-    purchase_date: string;
+    measure: string;
+    purchase_date?: string;
     expiration_date: string;
     inventory_id: number;
 }

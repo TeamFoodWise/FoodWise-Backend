@@ -11,14 +11,6 @@ export const createInventory = async (req: Request, res: Response): Promise<void
     }
 
     try {
-        const inventories = await InventoryModel.findAll();
-        const inventoryExists = inventories.find(inventory => inventory.name === name);
-
-        if (inventoryExists) {
-            res.status(400).json({error: 'Inventory already exists'});
-            return;
-        }
-
         const inventory: Inventory = await InventoryModel.create(req.body);
 
         if (!inventory) {

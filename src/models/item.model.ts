@@ -104,6 +104,31 @@ class ItemModel {
 
         return data || [];
     }
+
+    static async findByNameAndExpirationDate(productName: string, expiration_date: string) {
+        const {data, error} = await supabase
+        .from('items')
+        .select('*')
+        .eq('name', productName)
+        .eq('expiration_date', expiration_date);
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    if (!data || data.length === 0) {
+        return null;
+    } else if (data.length > 1) {
+        throw new Error('Multiple items found with the same name and expiration date');
+    }
+
+    return data[0];
+    }
+
+    static async isItemUsers(itemId: number, userId: number): Promise<boolean> {
+        const item = await this.findById(itemId);
+        return item?.inventory_id === userId;
+    }
 }
 
 export default ItemModel;

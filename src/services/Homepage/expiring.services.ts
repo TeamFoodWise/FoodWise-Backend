@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import {Response} from 'express';
 import ItemModel from "../../models/item.model";
 import InventoryModel from "../../models/inventory.model";
-import parseDate from "../../utils/utilities";
+import parseDate from "../../utils/parseDate";
 
 dotenv.config()
 

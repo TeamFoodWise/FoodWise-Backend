@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import {register, login, logout, showCurrentUser, updateProfile, refreshToken} from '../services/auth.services';
+import {register, login, logout, showCurrentUser, updateProfile, refreshToken} from '../services/auth/auth.services';
 import validateSchema from '../middleware/validateSchema';
 import { registerSchema, loginSchema } from '../schemas/auth.schema';
 import {authenticateRefreshToken, authenticateToken} from "../middleware/auth";

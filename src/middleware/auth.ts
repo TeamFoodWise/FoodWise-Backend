@@ -22,7 +22,6 @@ const generateRefreshToken = (user: User) => {
 const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): Response | void => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    console.log(token);
 
     if (!token) {
         return res.status(401).json({ error: 'No token provided' });
