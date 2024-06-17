@@ -6,13 +6,9 @@ import ConsumptionModel from "../../models/consumption.model";
 import ItemModel from "../../models/item.model";
 import InventoryModel from "../../models/inventory.model";
 import cron from 'node-cron';
+import parseDate from "../../utils/utilities";
 
 dotenv.config()
-
-function parseDate(dateString: string) {
-    const [day, month, year] = dateString.split(' - ').map(Number);
-    return new Date(year, month - 1, day);
-}
 
 const countExpiredAndInStock = (inventoryItems: Item[]) => {
     let expiredCount = 0;
@@ -177,7 +173,18 @@ export const showUserStatistics = async (req: AuthenticatedRequest, res: Respons
     }
 }
 
-cron.schedule('0 0 0 L * ?', async () => {
+const isLastDayOfMonth = (date: Date) => {
+    const testDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+    return date.getDate() === testDate.getDate();
+};
+
+cron.schedule('0 0 0 * * *', async () => {
+    const currentDate = new Date();
+
+    if (!isLastDayOfMonth(currentDate)) {
+        return;
+    }
+
     const users = await UserModel.findAll();
 
     for (let user of users) {

@@ -6,7 +6,7 @@ export interface User {
     email: string;
     hashed_password: string;
     preferences?: object;
-    last_month_progress: number;
+    last_month_progress?: number;
 }
 
 export interface Inventory {
