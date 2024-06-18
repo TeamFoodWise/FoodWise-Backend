@@ -1,16 +1,15 @@
-import {AuthenticatedRequest, Consumption, Inventory, Item} from "../../utils/interface";
+import {AuthenticatedRequest, Consumption, Item} from "../../utils/interface";
 import dotenv from 'dotenv';
 import {Response} from 'express';
 import UserModel from "../../models/user.model";
 import ConsumptionModel from "../../models/consumption.model";
 import ItemModel from "../../models/item.model";
-import InventoryModel from "../../models/inventory.model";
 import cron from 'node-cron';
 import parseDate from "../../utils/parseDate";
 
 dotenv.config()
 
-const countExpiredAndInStock = (inventoryItems: Item[]) => {
+const countExpiredAndInStock = (inventoryItems: Item[], userConsumptions: Consumption[]) => {
     let expiredCount = 0;
     let inStockCount = 0;
     const currentDate = new Date();
@@ -22,9 +21,18 @@ const countExpiredAndInStock = (inventoryItems: Item[]) => {
             expiredCount += item.quantity;
         } else {
             inStockCount += item.quantity;
-        }
-    }
+            if (userConsumptions.length > 0) {
+                const consumedItem = userConsumptions.find(consumption => consumption.item_id === item.id);
+                if (consumedItem && consumedItem.quantity < item.quantity) {
+                    inStockCount -= consumedItem.quantity;
 
+                    console.log(item.name + " is in stock " + inStockCount)
+                }
+            }
+        }
+
+
+    }
     return {expiredCount, inStockCount};
 }
 
@@ -87,20 +95,14 @@ const calculateTotalQuantityBeforeThisMonth = (lastDayOfLastMonth: Date, allItem
     return totalQuantityBeforeThisMonth;
 }
 
-const calculateWholeHistoryProgress = async (totalConsumedBeforeThisMonth: number, currentDate: Date, userInventories: Inventory[]) => {
+const calculateWholeHistoryProgress = async (totalConsumedBeforeThisMonth: number, currentDate: Date, userItems: Item[]) => {
     if (totalConsumedBeforeThisMonth === 0) {
         return null;
     }
 
-    let allItemsByInventoryID: Item[] = [];
-    for (const inventory of userInventories) {
-        const inventoryItems = await ItemModel.findByInventoryId(inventory.id);
-        allItemsByInventoryID = allItemsByInventoryID.concat(inventoryItems);
-    }
-
     const lastDayOfLastMonth = calculateLastDayOfLastMonth(currentDate);
 
-    const totalQuantityBeforeThisMonth = calculateTotalQuantityBeforeThisMonth(lastDayOfLastMonth, allItemsByInventoryID);
+    const totalQuantityBeforeThisMonth = calculateTotalQuantityBeforeThisMonth(lastDayOfLastMonth, userItems);
 
     return totalConsumedBeforeThisMonth / totalQuantityBeforeThisMonth * 100;
 }
@@ -134,16 +136,13 @@ export const showUserStatistics = async (req: AuthenticatedRequest, res: Respons
         })
         consumedCount = countConsumed(userConsumptionsThisMonth);
 
-        const userInventories = await InventoryModel.findByUserId(req.userId);
-        for (let i = 0; i < userInventories.length; i++) {
-            const inventoryItems = await ItemModel.findByInventoryId(userInventories[i].id);
-            const {
-                expiredCount: currentExpiredCount,
-                inStockCount: currentInStockCount
-            } = countExpiredAndInStock(inventoryItems);
-            expiredCount += currentExpiredCount;
-            inStockCount += currentInStockCount;
-        }
+        const userItems = await ItemModel.findByUserId(req.userId);
+        const {
+            expiredCount: currentExpiredCount,
+            inStockCount: currentInStockCount
+        } = countExpiredAndInStock(userItems, userConsumptions);
+        expiredCount += currentExpiredCount;
+        inStockCount += currentInStockCount;
 
         currentProgress = calculateCurrentProgress(consumedCount, inStockCount, expiredCount);
 
@@ -156,7 +155,7 @@ export const showUserStatistics = async (req: AuthenticatedRequest, res: Respons
             lastMonthProgress = null;
         }
 
-        wholeHistoryProgress = calculateWholeHistoryProgress(totalConsumedBeforeThisMonth, currentDate, userInventories)
+        wholeHistoryProgress = calculateWholeHistoryProgress(totalConsumedBeforeThisMonth, currentDate, userItems)
 
         res.status(200).json({
             consumed_count: consumedCount,
@@ -167,7 +166,6 @@ export const showUserStatistics = async (req: AuthenticatedRequest, res: Respons
             history_progress: lastMonthProgress,
             whole_history_progress: wholeHistoryProgress
         })
-        res.status(200).json("huwuh");
 
     } catch (error: any) {
         res.status(500).json({error: error.message});
@@ -192,19 +190,18 @@ cron.schedule('0 0 0 * * *', async () => {
         if (!user.id) {
             return;
         }
-        const userConsumption = await ConsumptionModel.getConsumptionsByUserId(user.id);
+        const userConsumptions = await ConsumptionModel.getConsumptionsByUserId(user.id);
 
-        const consumedCount = countConsumed(userConsumption);
+        const consumedCount = countConsumed(userConsumptions);
         let inStockCount = 0;
         let expiredCount = 0;
 
-        const userInventories = await InventoryModel.findByUserId(user.id);
-        for (let i = 0; i < userInventories.length; i++) {
-            const inventoryItems = await ItemModel.findByInventoryId(userInventories[i].id);
+        const userItems = await ItemModel.findByUserId(user.id);
+        for (let i = 0; i < userItems.length; i++) {
             const {
                 expiredCount: currentExpiredCount,
                 inStockCount: currentInStockCount
-            } = countExpiredAndInStock(inventoryItems);
+            } = countExpiredAndInStock(userItems, userConsumptions);
             expiredCount += currentExpiredCount;
             inStockCount += currentInStockCount;
         }

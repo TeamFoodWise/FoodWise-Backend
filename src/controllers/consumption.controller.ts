@@ -56,12 +56,29 @@ export const createConsumption = async (req: AuthenticatedRequest, res: Response
         return res.status(404).json({error: 'Item not found'});
     }
 
-    const createdConsumption = await ConsumptionModel.create({
-        user_id: userId,
-        item_id: foundItem.id,
-        quantity,
-        date
-    });
+    const consumedItems = await ConsumptionModel.getConsumptionsByUserId(userId);
+    const alreadyConsumedItem = consumedItems.find(consumption => consumption.item_id === foundItem.id);
 
-    return res.status(201).json(createdConsumption);
+    if (!alreadyConsumedItem && quantity > foundItem.quantity) {
+        return res.status(400).json({error: 'Not enough items in inventory'});
+    }
+
+    if (alreadyConsumedItem) {
+        const updatedConsumption = {
+            ...alreadyConsumedItem,
+            quantity: alreadyConsumedItem.quantity + quantity}
+        await ConsumptionModel.update(alreadyConsumedItem.id, updatedConsumption);
+        return res.status(200).json({message: 'Consumption made successfully', updatedConsumption: updatedConsumption});
+    } else {
+        const createdConsumption = await ConsumptionModel.create({
+            user_id: userId,
+            item_id: foundItem.id,
+            quantity,
+            date
+        });
+
+        return res.status(201).json({message: 'Consumption made successfully', createdConsumption: createdConsumption});
+    }
+
+
 }

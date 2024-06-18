@@ -228,7 +228,6 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
             const dateB = parseDate(b.expiration_date);
             return dateA.getTime() - dateB.getTime();
         });
-        console.log(sortedItems)
 
         const responseItems = sortedItems.slice(startIndex, endIndex).map(item => {
             return {

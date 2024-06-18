@@ -48,7 +48,7 @@ class ConsumptionModel {
         return data;
     }
 
-    static async update(id: number, consumption: Consumption): Promise<Consumption | null> {
+    static async update(id: number | undefined, consumption: Consumption): Promise<Consumption | null> {
         const { data, error } = await supabase
             .from('consumptions')
             .update(consumption)
