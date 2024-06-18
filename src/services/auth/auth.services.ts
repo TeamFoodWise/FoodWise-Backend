@@ -35,8 +35,10 @@ export const register = async (req: Request, res: Response) => {
         };
 
         const createdUser = await registerUser(user);
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
+        console.log(createdUser);
+        const accessToken = generateAccessToken(createdUser);
+        const refreshToken = generateRefreshToken(createdUser);
+        refreshTokens.add(refreshToken);
 
         const defaultInventory = {
             name: 'Default',
@@ -45,13 +47,13 @@ export const register = async (req: Request, res: Response) => {
 
         await InventoryModel.create(defaultInventory);
 
-        res.status(200).json({
+        res.status(201).json({
             access_token: accessToken,
             refresh_token: refreshToken,
             user: {
-                id: user.id,
-                full_name: user.full_name,
-                email: user.email,
+                id: createdUser?.id,
+                full_name: createdUser?.full_name,
+                email: createdUser?.email,
             }
         });
     } catch (error: any) {

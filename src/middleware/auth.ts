@@ -1,7 +1,7 @@
-import { Request, Response, NextFunction } from 'express';
+import {NextFunction, Response} from 'express';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import {JwtPayload, AuthenticatedRequest, User} from '../utils/interface';
+import {AuthenticatedRequest, JwtPayload, User} from '../utils/interface';
 
 dotenv.config();
 
@@ -9,12 +9,12 @@ const jwtSecret = process.env.JWT_SECRET || '';
 const tokenBlacklist = new Set<string>();
 const refreshTokens = new Set<string>();
 
-const generateAccessToken = (user: User) => {
-    return jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: '14d' });
+const generateAccessToken = (user: User | null) => {
+    return jwt.sign({ userId: user?.id }, jwtSecret, { expiresIn: '14d' });
 };
 
-const generateRefreshToken = (user: User) => {
-    const refreshToken = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: '14d' });
+const generateRefreshToken = (user: User | null) => {
+    const refreshToken = jwt.sign({ userId: user?.id }, jwtSecret, { expiresIn: '14d' });
     refreshTokens.add(refreshToken);
     return refreshToken;
 };
@@ -37,14 +37,8 @@ const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextF
         }
 
         const jwtPayload = payload as JwtPayload;
-        const userId = parseInt(jwtPayload.userId, 10);
 
-        if (isNaN(userId)) {
-            console.error('Invalid user ID', jwtPayload.userId)
-            return res.status(400).json({ error: 'Invalid user ID' });
-        }
-
-        req.userId = userId;
+        req.userId = parseInt(jwtPayload.userId, 10);
         req.access_token = token;
         next();
     });

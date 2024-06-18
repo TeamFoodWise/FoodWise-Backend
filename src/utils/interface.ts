@@ -54,3 +54,13 @@ export interface AuthenticatedRequest extends Request {
     refresh_token?: string;
 }
 
+export interface Recipe {
+    index?: number;
+    name: string;
+    ingredients: string[];
+    steps: string[];
+    minutes: number;
+    description: string;
+    rating: number;
+}
+

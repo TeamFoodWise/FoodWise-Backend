@@ -100,7 +100,9 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
             res.status(200).json({message: 'Item updated', item: incrementedItem});
             return;
         } else {
+            console.log(item)
             const createdItem = await ItemModel.create(item);
+
 
             if (!createdItem) {
                 res.status(400).json({error: 'Item not created'});
@@ -108,14 +110,16 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
             }
 
             res.status(201).json({
-                id: createdItem.id,
-                name: productName,
-                quantity,
-                measure,
-                unit,
-                purchase_date: purchaseDate,
-                expiration_date,
-                inventory_id
+                message: 'New Item created', item: {
+                    id: createdItem.id,
+                    name: productName,
+                    quantity,
+                    measure,
+                    unit,
+                    purchase_date: purchaseDate,
+                    expiration_date,
+                    inventory_id
+                }
             });
         }
     } catch (error: any) {
@@ -188,9 +192,9 @@ const listInStockItems = async (items: Item[], userId: number) => {
 
 export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const page = parseInt(<string>req.query.page);
-        const size = parseInt(<string>req.query.size);
-        const type = parseInt(<string>req.query.type);
+        const page = parseInt(<string>req.query.page) || 1;
+        const size = parseInt(<string>req.query.size) || 10;
+        const type = parseInt(<string>req.query.type) || 1;
         const userId = req.userId;
         if (!userId) {
             res.status(400).json({error: 'Please Login first'});
