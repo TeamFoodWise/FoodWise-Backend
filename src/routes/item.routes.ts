@@ -12,7 +12,7 @@ import {getExpiringSoonItems} from "../services/Homepage/expiring.services"
 const router: Router = Router();
 
 router.post('/', authenticateToken, createItem);
-router.get('/all', getItems);
+router.get('/all', authenticateToken, getItems);
 router.get('/expiring-soon', authenticateToken, getExpiringSoonItems);
 router.get('/', authenticateToken, getItemsByUserId)
 router.get('/:id', getItemById);

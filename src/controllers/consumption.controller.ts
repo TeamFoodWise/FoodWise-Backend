@@ -49,7 +49,7 @@ export const createConsumption = async (req: AuthenticatedRequest, res: Response
     }
 
     if (item_name && expiration_date) {
-        foundItem = await ItemModel.findByNameAndExpirationDate(item_name, expiration_date);
+        foundItem = await ItemModel.findByNameAndExpirationDateAndInventory(item_name, expiration_date, userId);
     }
 
     if (!foundItem) {

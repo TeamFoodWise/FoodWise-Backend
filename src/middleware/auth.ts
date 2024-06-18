@@ -10,7 +10,7 @@ const tokenBlacklist = new Set<string>();
 const refreshTokens = new Set<string>();
 
 const generateAccessToken = (user: User) => {
-    return jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: '1h' });
+    return jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: '14d' });
 };
 
 const generateRefreshToken = (user: User) => {

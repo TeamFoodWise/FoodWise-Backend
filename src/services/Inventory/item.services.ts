@@ -65,9 +65,9 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
     const productName = name.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
     try {
-        let incrementItem = await ItemModel.findByNameAndExpirationDate(productName, expiration_date);
+        let incrementItem = await ItemModel.findByNameAndExpirationDateAndInventory(productName, expiration_date, userId);
 
-        if (!incrementItem) {
+        if (!incrementItem || incrementItem.inventory_id !== userId) {
             incrementItem = null;
         } else if (incrementItem.unit !== unit) {
             res.status(400).json({error: 'Units do not match'});
@@ -246,9 +246,14 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
     }
 }
 
-export const getItems = async (req: Request, res: Response): Promise<void> => {
+export const getItems = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const items = await ItemModel.findAll();
+        const userId = req.userId;
+        const items = await ItemModel.findByUserId(userId);
+        if (!items) {
+            res.status(404).json({error: 'No items found'});
+            return;
+        }
         res.status(200).json(items);
     } catch (error: any) {
         res.status(500).json({error: error.message});

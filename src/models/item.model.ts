@@ -29,7 +29,7 @@ class ItemModel {
         return data || [];
     }
 
-    static async findById(id: number): Promise<Item | null> {
+    static async findById(id: number | undefined): Promise<Item | null> {
         const {data, error} = await supabase
             .from('items')
             .select('*')
@@ -43,7 +43,7 @@ class ItemModel {
         return data;
     }
 
-    static async update(id: number, item: Item): Promise<Item | null> {
+    static async update(id: number | undefined, item: Item): Promise<Item | null> {
         const {data, error} = await supabase
             .from('items')
             .update(item)
@@ -105,12 +105,13 @@ class ItemModel {
         return data || [];
     }
 
-    static async findByNameAndExpirationDate(productName: string, expiration_date: string) {
+    static async findByNameAndExpirationDateAndInventory(productName: string, expiration_date: string, inventory_id: number | undefined): Promise<Item | null> {
         const {data, error} = await supabase
             .from('items')
             .select('*')
             .eq('name', productName)
-            .eq('expiration_date', expiration_date);
+            .eq('expiration_date', expiration_date)
+            .eq('inventory_id', inventory_id);
 
         if (error) {
             throw new Error(error.message);
