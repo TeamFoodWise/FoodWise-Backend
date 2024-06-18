@@ -88,7 +88,7 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
             const itemWithLowestMeasure = parseInt(incrementItem.measure) < parseInt(measure) ? incrementItem : item;
             const itemWithHighestMeasure = parseInt(incrementItem.measure) < parseInt(measure) ? item : incrementItem;
 
-            const finalQuantity = itemWithHighestMeasure.quantity * Math.ceil(parseInt(itemWithHighestMeasure.measure)/parseInt(itemWithLowestMeasure.measure)) + itemWithLowestMeasure.quantity
+            const finalQuantity = itemWithHighestMeasure.quantity * Math.ceil(parseInt(itemWithHighestMeasure.measure) / parseInt(itemWithLowestMeasure.measure)) + itemWithLowestMeasure.quantity
             const newMeasure = itemWithLowestMeasure.measure;
             await ItemModel.update(incrementItem.id, {
                 ...incrementItem,
@@ -176,26 +176,21 @@ const listInStockItems = async (items: Item[], userId: number) => {
         return parseDate(item.expiration_date) > new Date();
     })
 
-    return notExpiredItems.filter(item => {
-        return consumedByUser.find(consumption => consumption.item_id === item.id && consumption.quantity < item.quantity);
-    }).map(item => {
-        const consumedQuantity = consumedByUser.find(consumption => consumption.item_id === item.id)?.quantity;
-        return {
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity - (consumedQuantity || 0),
-            measure: item.measure,
-            unit: item.unit,
-            expiration_date: item.expiration_date
+    for (let item of notExpiredItems) {
+        const consumedItem = consumedByUser.find(consumption => consumption.item_id === item.id);
+        if (consumedItem) {
+            item.quantity -= consumedItem.quantity;
         }
-    });
+    }
+
+    return notExpiredItems.filter(item => item.quantity > 0);
 }
 
 export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-        const page = parseInt(req.params.page);
-        const size = parseInt(req.params.size);
-        const type = parseInt(req.params.type);
+        const page = parseInt(<string>req.query.page);
+        const size = parseInt(<string>req.query.size);
+        const type = parseInt(<string>req.query.type);
         const userId = req.userId;
         if (!userId) {
             res.status(400).json({error: 'Please Login first'});
@@ -205,39 +200,34 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
         const endIndex = page * size;
 
         let items = await ItemModel.findByUserId(userId);
+        if (!items) {
+            res.status(404).json({items: [], message: 'No items found'});
+            return;
+        }
         let result;
 
         if (type === 1) {
-            console.log(items);
-            if (!items) {
-                res.status(404).json({items: [], message: 'No item found'});
-                return;
-            }
             result = await listInStockItems(items, userId);
-            res.status(200).json({foods: result})
-            return;
         }
 
         if (type === 2) {
-            if (!items) {
-                res.status(404).json({items: [], message: 'No items found'});
-                return;
-            }
             result = await listConsumedItems(items, userId);
         }
 
         if (type === 3) {
-            if (!items) {
-                res.status(404).json({items: [], message: 'No items found'});
-                return;
-            }
             result = await listExpiredItems(items, userId);
         }
 
         if (!result) {
-            res.status(404).json({items: [], message: 'No items found'});
+            res.status(200).json({items: [], message: 'No items found'});
             return;
         }
+
+        console.log(result.sort((a, b) => {
+            const dateA = parseDate(a.expiration_date);
+            const dateB = parseDate(b.expiration_date);
+            return dateA.getTime() - dateB.getTime();
+        }))
 
         const sortedItems = result.sort((a, b) => {
             const dateA = parseDate(a.expiration_date);
@@ -254,8 +244,7 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
                 expiration_date: item.expiration_date
             }
         })
-
-        // res.status(200).json({foods: responseItems})
+        res.status(200).json({foods: responseItems})
         return;
     } catch (error: any) {
         res.status(500).json({error: error.message});
