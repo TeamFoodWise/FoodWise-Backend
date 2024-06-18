@@ -13,10 +13,10 @@ const router: Router = Router();
 
 router.post('/', authenticateToken, createItem);
 router.get('/all', getItems);
+router.get('/expiring-soon', authenticateToken, getExpiringSoonItems);
 router.get('/', authenticateToken, getItemsByUserId)
 router.get('/:id', getItemById);
 router.put('/:id', authenticateToken, updateItem);
 router.delete('/', authenticateToken, deleteItem)
-router.get('/expiring-soon', authenticateToken, getExpiringSoonItems);
 
 export default router;

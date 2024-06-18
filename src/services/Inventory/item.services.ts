@@ -3,9 +3,9 @@ import ItemModel from '../../models/item.model';
 import {AuthenticatedRequest, Item} from '../../utils/interface'
 import formattedCurrentDate from "../../utils/formattedCurrentDate";
 import parseDate from "../../utils/parseDate";
-import {getConsumedItems} from "../../controllers/consumption.controller";
+import ConsumptionModel from "../../models/consumption.model";
 
-const validateItemData = (name: string, quantity: number, measure: string, expiration_date: string): [boolean, string] => {
+const validateItemData = (name: string, quantity: number, measure: string, expiration_date: string, type: string): [boolean, string] => {
     if (!name || quantity == null || !measure || !expiration_date) {
         return [false, 'Please fill in all the required data'];
     }
@@ -14,9 +14,25 @@ const validateItemData = (name: string, quantity: number, measure: string, expir
         return [false, 'Quantity should be a positive number'];
     }
 
-    const weight: number = parseInt(measure.split('g' || 'G')[0]);
-    if (isNaN(weight) || weight < 0) {
-        return [false, 'Invalid weight'];
+    if (!parseInt(measure)) {
+        return [false, 'Measure must contain only numbers'];
+    }
+
+    if (type !== 'Gr' && type !== 'mL') {
+        return [false, 'Invalid unit, must be either Gr or mL'];
+    }
+
+    let weight: number = 0;
+    if (type === 'Gr' && !measure.includes('g')) {
+        weight = parseInt(measure.trim());
+    }
+
+    if (type === 'mL' && !measure.includes('ml')) {
+        weight = parseInt(measure.trim());
+    }
+
+    if (isNaN(weight) || weight <= 0) {
+        return [false, 'Weight must be a positive number'];
     }
 
     return [true, 'Validated'];
@@ -29,9 +45,9 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
         return;
     }
 
-    let {name, quantity, category, measure, expiration_date, purchase_date, inventory_id} = req.body;
+    let {name, quantity, measure, expiration_date, purchase_date, type} = req.body;
 
-    const [isValid, message] = validateItemData(name, quantity, measure, expiration_date);
+    const [isValid, message] = validateItemData(name, quantity, measure, expiration_date, type);
 
     if (!isValid) {
         res.status(400).json({error: message});
@@ -43,35 +59,47 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
         purchaseDate = formattedCurrentDate();
     }
 
-    if (!inventory_id) {
-        inventory_id = userId;
-    }
+    const inventory_id = userId
+    const unit = type
 
     const productName = name.toLowerCase().split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 
     try {
-        const incrementItem = await ItemModel.findByNameAndExpirationDate(productName, expiration_date);
+        let incrementItem = await ItemModel.findByNameAndExpirationDate(productName, expiration_date);
+
+        if (!incrementItem) {
+            incrementItem = null;
+        } else if (incrementItem.unit !== unit) {
+            res.status(400).json({error: 'Units do not match'});
+            return;
+        }
+
+        const item: Item = {
+            name: productName,
+            quantity,
+            unit,
+            measure,
+            expiration_date,
+            purchase_date: purchaseDate,
+            inventory_id
+        };
+
         if (incrementItem) {
-            quantity += incrementItem.quantity;
+            const itemWithLowestMeasure = parseInt(incrementItem.measure) < parseInt(measure) ? incrementItem : item;
+            const itemWithHighestMeasure = parseInt(incrementItem.measure) < parseInt(measure) ? item : incrementItem;
+
+            const finalQuantity = itemWithHighestMeasure.quantity * Math.ceil(parseInt(itemWithHighestMeasure.measure)/parseInt(itemWithLowestMeasure.measure)) + itemWithLowestMeasure.quantity
+            const newMeasure = itemWithLowestMeasure.measure;
             await ItemModel.update(incrementItem.id, {
                 ...incrementItem,
-                quantity
+                measure: newMeasure,
+                quantity: finalQuantity
             });
 
             const incrementedItem = await ItemModel.findById(incrementItem.id);
             res.status(200).json({message: 'Item updated', item: incrementedItem});
             return;
         } else {
-            const item: Item = {
-                name: productName,
-                quantity,
-                category,
-                measure,
-                expiration_date,
-                purchase_date: purchaseDate,
-                inventory_id
-            };
-
             const createdItem = await ItemModel.create(item);
 
             if (!createdItem) {
@@ -84,6 +112,7 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
                 name: productName,
                 quantity,
                 measure,
+                unit,
                 purchase_date: purchaseDate,
                 expiration_date,
                 inventory_id
@@ -95,7 +124,7 @@ export const createItem = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 const listExpiredItems = async (items: Item[], userId: number) => {
-    const consumedByUser = await getConsumedItems(userId);
+    const consumedByUser = await ConsumptionModel.getConsumptionsByUserId(userId);
 
     const consumedButNotFinishedItems = items.filter(item => {
         return consumedByUser.find(consumption => consumption.item_id === item.id && consumption.quantity < item.quantity && parseDate(item.expiration_date) < new Date());
@@ -107,6 +136,7 @@ const listExpiredItems = async (items: Item[], userId: number) => {
                 name: item.name,
                 quantity: item.quantity - (consumedQuantity || 0),
                 measure: item.measure,
+                unit: item.unit,
                 expiration_date: item.expiration_date
             }
         })
@@ -120,7 +150,7 @@ const listExpiredItems = async (items: Item[], userId: number) => {
 }
 
 const listConsumedItems = async (items: Item[], userId: number) => {
-    const consumedByUser = await getConsumedItems(userId)
+    const consumedByUser = await ConsumptionModel.getConsumptionsByUserId(userId)
     const expiredItems = await listExpiredItems(items, userId);
 
     return items.filter(item => {
@@ -134,13 +164,14 @@ const listConsumedItems = async (items: Item[], userId: number) => {
                 name: item.name,
                 quantity: consumedItem?.quantity,
                 measure: item.measure,
+                unit: item.unit,
                 expiration_date: item.expiration_date,
             }
         })
 }
 
 const listInStockItems = async (items: Item[], userId: number) => {
-    const consumedByUser = await getConsumedItems(userId);
+    const consumedByUser = await ConsumptionModel.getConsumptionsByUserId(userId);
     const notExpiredItems = items.filter(item => {
         return parseDate(item.expiration_date) > new Date();
     })
@@ -154,6 +185,7 @@ const listInStockItems = async (items: Item[], userId: number) => {
             name: item.name,
             quantity: item.quantity - (consumedQuantity || 0),
             measure: item.measure,
+            unit: item.unit,
             expiration_date: item.expiration_date
         }
     });
@@ -172,19 +204,21 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
         const startIndex = (page - 1) * size;
         const endIndex = page * size;
 
-        let items, result;
+        let items = await ItemModel.findByUserId(userId);
+        let result;
 
         if (type === 1) {
-            items = await ItemModel.findByUserId(userId);
+            console.log(items);
             if (!items) {
-                res.status(404).json({items: [], message: 'No items found'});
+                res.status(404).json({items: [], message: 'No item found'});
                 return;
             }
             result = await listInStockItems(items, userId);
+            res.status(200).json({foods: result})
+            return;
         }
 
         if (type === 2) {
-            items = await ItemModel.findByUserId(userId);
             if (!items) {
                 res.status(404).json({items: [], message: 'No items found'});
                 return;
@@ -193,7 +227,6 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
         }
 
         if (type === 3) {
-            items = await ItemModel.findByUserId(userId);
             if (!items) {
                 res.status(404).json({items: [], message: 'No items found'});
                 return;
@@ -211,17 +244,18 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
             const dateB = parseDate(b.expiration_date);
             return dateA.getTime() - dateB.getTime();
         });
-        const response = sortedItems.slice(startIndex, endIndex).map(item => {
+        const responseItems = sortedItems.slice(startIndex, endIndex).map(item => {
             return {
                 id: item.id,
                 name: item.name,
                 quantity: item.quantity,
                 measure: item.measure,
+                unit: item.unit,
                 expiration_date: item.expiration_date
             }
         })
 
-        res.status(200).json({foods: response})
+        // res.status(200).json({foods: responseItems})
         return;
     } catch (error: any) {
         res.status(500).json({error: error.message});
@@ -257,9 +291,11 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response): Prom
         return;
     }
 
-    let {name, quantity, category, measure, expiration_date, purchase_date, inventory_id} = req.body;
+    let {name, quantity, measure, expiration_date, purchase_date, inventory_id, type} = req.body;
 
-    const [isValid, message] = validateItemData(name, quantity, measure, expiration_date);
+    const [isValid, message] = validateItemData(name, quantity, measure, expiration_date, type);
+
+    const unit = type
 
     purchase_date = purchase_date || formattedCurrentDate();
     inventory_id = inventory_id || userId;
@@ -274,7 +310,7 @@ export const updateItem = async (req: AuthenticatedRequest, res: Response): Prom
     const updatedItem: Item = {
         name: productName,
         quantity,
-        category,
+        unit,
         measure,
         expiration_date,
         purchase_date,

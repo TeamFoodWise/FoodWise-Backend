@@ -22,11 +22,11 @@ export const getExpiringSoonItems = async (req: AuthenticatedRequest, res: Respo
             return res.status(400).json({message: 'User ID is required'});
         }
 
-        const allItemsByInventoryID = await ItemModel.findByUserId(userId);
+        const allItemsByUserId = await ItemModel.findByUserId(userId);
 
         const currentDate = new Date();
 
-        const expiringSoonItems = allItemsByInventoryID
+        const expiringSoonItems = allItemsByUserId
             .filter(item => parseDate(item.expiration_date) > currentDate)
             .sort((a, b) => parseDate(a.expiration_date).getTime() - parseDate(b.expiration_date).getTime())
             .slice(0, 6);
@@ -34,7 +34,6 @@ export const getExpiringSoonItems = async (req: AuthenticatedRequest, res: Respo
         const response = expiringSoonItems.map(item => {
             return {
                 "name": item.name,
-                "type": item.category,
                 "remaining_days": countRemainingDays(parseDate(item.expiration_date))
             }
         })
