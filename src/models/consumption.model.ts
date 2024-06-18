@@ -2,7 +2,12 @@ import supabase from '../config/supabase';
 import { Consumption } from '../utils/interface';
 
 class ConsumptionModel {
-    static async create(consumption: Consumption): Promise<Consumption | null> {
+    static async create(consumption: {
+        date: string;
+        quantity: any;
+        user_id: number;
+        item_id: number | undefined
+    }): Promise<Consumption | null> {
         const { data, error } = await supabase
             .from('consumptions')
             .insert(consumption)

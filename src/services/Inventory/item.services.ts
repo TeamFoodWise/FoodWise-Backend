@@ -223,17 +223,13 @@ export const getItemsByUserId = async (req: AuthenticatedRequest, res: Response)
             return;
         }
 
-        console.log(result.sort((a, b) => {
-            const dateA = parseDate(a.expiration_date);
-            const dateB = parseDate(b.expiration_date);
-            return dateA.getTime() - dateB.getTime();
-        }))
-
         const sortedItems = result.sort((a, b) => {
             const dateA = parseDate(a.expiration_date);
             const dateB = parseDate(b.expiration_date);
             return dateA.getTime() - dateB.getTime();
         });
+        console.log(sortedItems)
+
         const responseItems = sortedItems.slice(startIndex, endIndex).map(item => {
             return {
                 id: item.id,
