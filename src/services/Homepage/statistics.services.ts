@@ -25,8 +25,6 @@ const countExpiredAndInStock = (inventoryItems: Item[], userConsumptions: Consum
                 const consumedItem = userConsumptions.find(consumption => consumption.item_id === item.id);
                 if (consumedItem && consumedItem.quantity < item.quantity) {
                     inStockCount -= consumedItem.quantity;
-
-                    console.log(item.name + " is in stock " + inStockCount)
                 }
             }
         }
