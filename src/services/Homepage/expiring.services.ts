@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import {Response} from 'express';
 import ItemModel from "../../models/item.model";
 import parseDate from "../../utils/parseDate";
+import showInStockIngredients from "../../utils/showInStockItems";
 
 dotenv.config()
 
@@ -10,7 +11,6 @@ const countRemainingDays = (expirationDate: Date) => {
     const currentDate = new Date();
     const diff = expirationDate.getTime() - currentDate.getTime();
     return Math.ceil(diff / (1000 * 3600 * 24));
-
 }
 
 export const getExpiringSoonItems = async (req: AuthenticatedRequest, res: Response) => {
@@ -24,8 +24,9 @@ export const getExpiringSoonItems = async (req: AuthenticatedRequest, res: Respo
         const allItemsByUserId = await ItemModel.findByUserId(userId);
 
         const currentDate = new Date();
+        const currentInStockIngredients = await showInStockIngredients(allItemsByUserId, userId)
 
-        const expiringSoonItems = allItemsByUserId
+        const expiringSoonItems = currentInStockIngredients
             .filter(item => parseDate(item.expiration_date) > currentDate)
             .sort((a, b) => parseDate(a.expiration_date).getTime() - parseDate(b.expiration_date).getTime())
             .slice(0, 6);

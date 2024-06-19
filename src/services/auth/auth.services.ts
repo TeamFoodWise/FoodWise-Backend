@@ -2,7 +2,7 @@ import {Request, Response} from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import {editProfile, getUserByEmail, registerUser} from '../../controllers/user.controller';
+import {getUserByEmail, registerUser} from '../../controllers/user.controller';
 import {AuthenticatedRequest, User} from '../../utils/interface';
 import {generateAccessToken, generateRefreshToken, invalidateToken, refreshTokens} from "../../middleware/auth";
 import UserModel from "../../models/user.model";
@@ -54,6 +54,7 @@ export const register = async (req: Request, res: Response) => {
                 id: createdUser?.id,
                 full_name: createdUser?.full_name,
                 email: createdUser?.email,
+                profile_url: createdUser?.profile_url
             }
         });
     } catch (error: any) {
@@ -87,7 +88,8 @@ export const login = async (req: Request, res: Response) => {
             user: {
                 id: user.id,
                 full_name: user.full_name,
-                email: user.email
+                email: user.email,
+                profile_url: user.profile_url
             }
         });
     } catch (error: any) {
@@ -124,7 +126,8 @@ export const showCurrentUser = async (req: AuthenticatedRequest, res: Response) 
         res.status(200).json({
             user: {
                 full_name: user.full_name,
-                email: user.email
+                email: user.email,
+                profile_url: user.profile_url
             }
         });
     } catch (error: any) {
@@ -133,38 +136,58 @@ export const showCurrentUser = async (req: AuthenticatedRequest, res: Response) 
 };
 
 export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
-    const {full_name, new_password, confirmation_new_password} = req.body;
-
-    if (new_password !== confirmation_new_password) {
-        return res.status(400).json({error: 'Passwords do not match'});
-    }
+    let {full_name, new_password, confirmation_new_password, profile_url} = req.body;
 
     try {
-        if (!req.userId) {
+        const userId = req.userId;
+        if (!userId) {
             return res.status(400).json({error: 'User not found'});
         }
 
-        const user = await UserModel.findById(req.userId);
-
-        if (!user) {
+        const currentUser = await UserModel.findById(userId);
+        if (!currentUser) {
             return res.status(400).json({error: 'User not found'});
         }
 
-        const hashed_password = await bcrypt.hash(new_password, 10);
+        if (!full_name) {
+            full_name = currentUser.full_name;
+        }
+
+        if (!profile_url) {
+            profile_url = currentUser?.profile_url;
+        }
+
+        if (new_password !== confirmation_new_password) {
+            return res.status(400).json({error: 'Passwords do not match'});
+        }
+
+        if (!confirmation_new_password) {
+            return res.status(400).json({error: 'Please confirm your new password'});
+        }
+
+        let hashed_password;
+
+        if (!new_password && !confirmation_new_password) {
+            hashed_password = currentUser?.hashed_password;
+        } else {
+            hashed_password = await bcrypt.hash(new_password, 10);
+        }
 
         const updatedUser = {
-            ...user,
+            ...currentUser,
             full_name,
             hashed_password,
+            profile_url
         };
 
-        const updated = await editProfile(updatedUser);
+        const updated = await UserModel.update(userId, updatedUser);
         if (updated) {
             res.status(200).json({
                 message: 'Profile updated',
                 user: {
                     full_name: updated.full_name,
-                    email: updated.email
+                    email: updated.email,
+                    profile_url: updated.profile_url
                 }
             });
         } else {

@@ -7,6 +7,7 @@ export interface User {
     hashed_password: string;
     preferences?: object;
     last_month_progress?: number;
+    profile_url?: string;
 }
 
 export interface Inventory {
@@ -55,7 +56,7 @@ export interface AuthenticatedRequest extends Request {
 }
 
 export interface Recipe {
-    index?: number;
+    index: number;
     name: string;
     ingredients: string[];
     steps: string[];

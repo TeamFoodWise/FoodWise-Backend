@@ -4,7 +4,7 @@ import {AuthenticatedRequest, Item} from "../../utils/interface";
 import {Response} from 'express';
 import parseDate from "../../utils/parseDate";
 
-const countInStock = async (items: Item[], userId: number): Promise<number> => {
+export const countInStock = async (items: Item[], userId: number): Promise<number> => {
     const consumedByUsers = await ConsumptionModel.getConsumptionsByUserId(userId);
     let inStockCount = 0;
     for (const item of items) {
@@ -20,7 +20,7 @@ const countInStock = async (items: Item[], userId: number): Promise<number> => {
     return inStockCount
 }
 
-const countConsumed = async (items: Item[], userId: number): Promise<number> => {
+export const countConsumed = async (items: Item[], userId: number): Promise<number> => {
     const consumedByUser = await ConsumptionModel.getConsumptionsByUserId(userId);
 
     let consumedCount = 0;
@@ -33,7 +33,7 @@ const countConsumed = async (items: Item[], userId: number): Promise<number> => 
     return consumedCount;
 }
 
-const countExpired = async (items: Item[], userId: number): Promise<number> => {
+export const countExpired = async (items: Item[], userId: number): Promise<number> => {
     const consumedByUser = await ConsumptionModel.getConsumptionsByUserId(userId);
 
     let expiredCount = 0;
