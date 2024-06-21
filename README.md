@@ -9,7 +9,7 @@ Foodwise is aiming to be your number one go to application that gives you the ab
 
 # API Documentation 📃
 The API Documentation is made with Postman and accessible at
-this link: <br> [FoodWise API Documentation](https://documenter.getpostman.com/view/13401392/Tz5tZQ8v)
+this link: <br> [FoodWise API Documentation](https://documenter.getpostman.com/view/36252819/2sA3XPBhJG)
 
 # Deployment
 The backend is deployed on Google App Engine and can be accessed at this link: <br> [FoodWise Backend](https://foodwise-backend.ue.r.appspot.com/)
