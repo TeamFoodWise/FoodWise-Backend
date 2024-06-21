@@ -12,7 +12,7 @@ The API Documentation is made with Postman and accessible at
 this link: <br> [FoodWise API Documentation](https://documenter.getpostman.com/view/36252819/2sA3XPBhJG)
 
 # Deployment
-The backend is deployed on Google App Engine and can be accessed at this link: <br> [FoodWise Backend](https://foodwise-423308.as.r.appspot.com/)
+The backend is deployed on Google App Engine and can be accessed at this link: <br> [https://foodwise-423308.as.r.appspot.com/](https://foodwise-423308.as.r.appspot.com/)
 
 # Technologies Used ⚙️
 - Node.js
