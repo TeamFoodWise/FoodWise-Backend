@@ -177,7 +177,7 @@ const listConsumedItems = async (items: Item[], userId: number) => {
 const listInStockItems = async (items: Item[], userId: number) => {
     const consumedByUser = await ConsumptionModel.getConsumptionsByUserId(userId);
     const notExpiredItems = items.filter(item => {
-        return parseDate(item.expiration_date) > new Date();
+        return parseDate(item.expiration_date) >= new Date();
     })
 
     for (let item of notExpiredItems) {

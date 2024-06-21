@@ -7,10 +7,86 @@ import {AuthenticatedRequest, User} from '../../utils/interface';
 import {generateAccessToken, generateRefreshToken, invalidateToken, refreshTokens} from "../../middleware/auth";
 import UserModel from "../../models/user.model";
 import InventoryModel from "../../models/inventory.model";
+import supabase from "../../config/supabase";
+import {decode} from "base64-arraybuffer";
 
 dotenv.config();
 
 const jwtSecret = process.env.JWT_SECRET || '';
+
+export const updateProfile2 = async (req: AuthenticatedRequest, res: Response) => {
+    let {full_name, new_password, confirmation_new_password} = req.body;
+
+    try {
+        const userId = (req as any).userId;
+        if (!userId) {
+            return res.status(400).json({error: 'User not found'});
+        }
+
+        const currentUser = await UserModel.findById(userId);
+        if (!currentUser) {
+            return res.status(400).json({error: 'User not found'});
+        }
+
+        if (full_name) {
+            currentUser.full_name = full_name;
+        }
+
+        let profile_url = currentUser.profile_url;
+
+        if (req.file) {
+            const file = req.file;
+            const fileBase64 = decode(file.buffer.toString('base64'));
+
+            const {data, error} = await supabase
+                .storage
+                .from('profile-pictures')
+                .upload(`public/${file.originalname}`, fileBase64, {
+                    contentType: "image/png",
+                    cacheControl: '3600',
+                    upsert: false,
+                });
+
+            if (error) {
+                throw new Error(`Error uploading file: ${error.message}`);
+            }
+
+            const {data : {publicUrl}} = supabase.storage.from('profile-pictures').getPublicUrl(`public/${file.originalname}`);
+            profile_url = publicUrl;
+        }
+
+        if (new_password || confirmation_new_password) {
+            if (new_password !== confirmation_new_password) {
+                return res.status(400).json({error: 'Passwords do not match'});
+            }
+
+            if (!confirmation_new_password) {
+                return res.status(400).json({error: 'Please confirm your new password'});
+            }
+
+            currentUser.hashed_password = await bcrypt.hash(new_password, 10);
+        }
+
+        currentUser.profile_url = profile_url;
+
+        const updated = await UserModel.update(userId, currentUser);
+        if (updated) {
+            res.status(200).json({
+                message: 'Profile updated',
+                user: {
+                    full_name: updated.full_name,
+                    email: updated.email,
+                    profile_url: updated.profile_url
+                }
+            });
+        } else {
+            res.status(404).json({error: 'User not found'});
+        }
+    } catch (error: any) {
+        res.status(500).json({error: error.message});
+    }
+};
+
 
 export const register = async (req: Request, res: Response) => {
     const {full_name, email, password, confirm_password} = req.body;
@@ -135,69 +211,6 @@ export const showCurrentUser = async (req: AuthenticatedRequest, res: Response) 
     }
 };
 
-export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
-    let {full_name, new_password, confirmation_new_password, profile_url} = req.body;
-
-    try {
-        const userId = req.userId;
-        if (!userId) {
-            return res.status(400).json({error: 'User not found'});
-        }
-
-        const currentUser = await UserModel.findById(userId);
-        if (!currentUser) {
-            return res.status(400).json({error: 'User not found'});
-        }
-
-        if (!full_name) {
-            full_name = currentUser.full_name;
-        }
-
-        if (!profile_url) {
-            profile_url = currentUser?.profile_url;
-        }
-
-        if (new_password !== confirmation_new_password) {
-            return res.status(400).json({error: 'Passwords do not match'});
-        }
-
-        if (!confirmation_new_password) {
-            return res.status(400).json({error: 'Please confirm your new password'});
-        }
-
-        let hashed_password;
-
-        if (!new_password && !confirmation_new_password) {
-            hashed_password = currentUser?.hashed_password;
-        } else {
-            hashed_password = await bcrypt.hash(new_password, 10);
-        }
-
-        const updatedUser = {
-            ...currentUser,
-            full_name,
-            hashed_password,
-            profile_url
-        };
-
-        const updated = await UserModel.update(userId, updatedUser);
-        if (updated) {
-            res.status(200).json({
-                message: 'Profile updated',
-                user: {
-                    full_name: updated.full_name,
-                    email: updated.email,
-                    profile_url: updated.profile_url
-                }
-            });
-        } else {
-            res.status(404).json({error: 'User not found'});
-        }
-    } catch (error: any) {
-        res.status(500).json({error: error.message});
-    }
-};
-
 export const refreshToken = async (req: AuthenticatedRequest, res: Response) => {
     const {refresh_token} = req.body;
 
@@ -229,4 +242,3 @@ export const refreshToken = async (req: AuthenticatedRequest, res: Response) => 
         res.status(500).json({error: error.message});
     }
 };
-
